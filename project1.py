@@ -62,14 +62,14 @@ for user_id, ratings in user_ratings.items():
 # print(len(user_ratings))
 
 
-def get_rand_user_pair(user_count):
-  user_1 = -1
-  user_2 = -1
-  while user_1 == user_2:
-    user_1 = random.randint(0, user_count)
-    user_2 = random.randint(0, user_count)
+# def get_rand_user_pair(user_count):
+#   user_1 = -1
+#   user_2 = -1
+#   while user_1 == user_2:
+#     user_1 = random.randint(0, user_count)
+#     user_2 = random.randint(0, user_count)
 
-  return frozenset({user_1, user_2})
+#   return frozenset({user_1, user_2})
 
 ############################# Part 2 : calculating jaccard distance ############################
 NUM_PAIRS = 10000
@@ -78,9 +78,9 @@ i = 0
 selected_pairs = set()
 jaccard_distances = []
 for i in range(NUM_PAIRS):
-  user_pair = get_rand_user_pair(user_count)
+  user_pair = frozenset(random.sample(user_count, 2))
   while user_pair in selected_pairs: # if already selected, re-draw
-    user_pair = get_rand_user_pair(user_count)
+    user_pair = frozenset(random.sample(user_count, 2))
 
   # unpack user values
   user_1, user_2 = user_pair
@@ -90,7 +90,7 @@ for i in range(NUM_PAIRS):
   jaccard_distances  += [1 - (intersection / union)]
 
 
-num_bins = 50
+num_bins = 200
 print("Average distance = " + str(np.average(jaccard_distances)))
 plt.hist(jaccard_distances, num_bins, facecolor='blue', alpha=0.5)
 plt.show()
