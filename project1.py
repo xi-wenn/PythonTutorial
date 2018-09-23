@@ -62,7 +62,14 @@ for user_id, ratings in user_ratings.items():
 # print(len(user_ratings))
 
 
+def get_rand_user_pair(user_count):
+  user_1 = -1
+  user_2 = -1
+  while user_1 == user_2:
+    user_1 = random.randint(0, user_count)
+    user_2 = random.randint(0, user_count)
 
+  return frozenset({user_1, user_2})
 
 ############################# Part 2 : calculating jaccard distance ############################
 NUM_PAIRS = 10000
@@ -77,7 +84,7 @@ for i in range(NUM_PAIRS):
 
   # unpack user values
   user_1, user_2 = user_pair
-  user_1_data, user_2_data = movie_rating_matrix[:,user1], movie_rating_matrix[:,user2]
+  user_1_data, user_2_data = movie_rating_matrix[:,user_1], movie_rating_matrix[:,user_2]
   intersection = np.sum(np.bitwise_and(user_1_data, user_2_data))
   union = np.sum(np.bitwise_or(user_1_data, user_2_data))
   jaccard_distances  += [1 - (intersection / union)]
@@ -85,19 +92,13 @@ for i in range(NUM_PAIRS):
 
 num_bins = 50
 print("Average distance = " + str(np.average(jaccard_distances)))
-plt.hist(x, num_bins, facecolor='blue', alpha=0.5)
+plt.hist(jaccard_distances, num_bins, facecolor='blue', alpha=0.5)
+plt.show()
 
 
 
 
-def get_rand_user_pair(user_count):
-  user_1 = -1
-  user_2 = -1
-  while user_1 == user_2:
-    user_1 = random.randint(0, user_count)
-    user_2 = random.randint(0, user_count)
 
-  return frozenset({user1, user2})
 
 
 
