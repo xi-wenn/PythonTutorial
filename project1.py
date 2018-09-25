@@ -5,6 +5,8 @@ import random
 import matplotlib.pyplot as plt
 import pdb 
 from scipy.sparse import csc_matrix
+import collections
+from tempfile import TemporaryFile
 
 pp = pprint.PrettyPrinter(depth=200)
 
@@ -61,12 +63,19 @@ for user_id, ratings in user_ratings.items():
 
 #key: user_id, value:list of movie_id(continuous)
 user_ratings_mapped = {}
+users = {} # key: user_id, value: index of user_id
+i = 0
 for user_id, ratings in user_ratings.items():
+  pdb.set_trace()
   temp_list = []
+  users[user_id] = i
+  i += 1
   for movie_id_before in ratings:
     new_movie_id = movies[movie_id_before]
     temp_list.append(new_movie_id)
   user_ratings_mapped[user_id] = temp_list
+
+#user_ratings_mapped = collections.OrderedDict(user_ratings_mapped)
 
 ########################## part4 #############################################################
 #the smallest prime number larger than 4499
@@ -82,7 +91,8 @@ def hash_func(a, b, x, R):
   res = (a*x + b) % R
   return res
 
-#get min_hashed value of a column
+
+#get min_hashed value xxsof a column
 def get_hashed_val(movie_list, a, b, R):
   min_val = R
   for movie_id in movie_list:
@@ -92,26 +102,27 @@ def get_hashed_val(movie_list, a, b, R):
   return min_val
 
 #get 1 row of the signature matrix
-def get_sig_vec(user_ratings_mapped, a, b, R, user_count):
+def get_sig_vec(user_ratings_after, a, b, R, user_count):
   vec = np.zeros(user_count)
-  i = 0
-  for user_id, ratings in user_ratings.items():
-    vec[i] = get_hashed_val(user_ratings_mapped[user_id], a, b, R)
-    i += 1
+  for user_id, ratings in user_ratings_after.items():
+    vec[users[user_id]] = get_hashed_val(ratings, a, b, R)
+  pdb.set_trace()
   return vec
 
 #get the signature matrix
-def get_sig_mat(a_list, b_list, user_ratings_mapped, user_count,R):
+def get_sig_mat(a_list, b_list, user_ratings_after, user_count,R):
   sig_mat = np.zeros([1000, user_count])
   for i in range(1000):
-    a = a_list[i]
-    b = b_list[i]
-    sig_mat[i,:] = get_sig_vec(user_ratings_mapped, a, b, R, user_count)
+    sig_mat[i,:] = get_sig_vec(user_ratings_after, a_list[i], b_list[i], R, user_count)
   return sig_mat
 
-signature_matrix = get_sig_vec(a_list, b_list, user_ratings_mapped, user_count,R)
 
-  
+signature_matrix = get_sig_mat(a_list, b_list, user_ratings_mapped, user_count,R)
+np.save('signature_matrix_file', signature_matrix)
+
+
+
+
 
 
 
