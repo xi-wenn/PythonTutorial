@@ -3,7 +3,7 @@ import pprint
 import random
 # import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
-import pdb 
+import pdb
 from scipy.sparse import csc_matrix
 import collections
 from tempfile import TemporaryFile
@@ -12,7 +12,7 @@ pp = pprint.PrettyPrinter(depth=200)
 
 INPUT_FILE_NAME = 'Netflix_data.txt'
 user_ratings = {} #key: user_id, value: list of movie_id(original)
-movies = {} #key: movie_id, value: row_index
+movie_id_row_idx_map = {} #key: movie_id, value: row_index
 f = open(INPUT_FILE_NAME, 'r')
 current_movie_id = -1
 movie_count = 0
@@ -24,7 +24,7 @@ for line in f:
   if ':' in line:
     # is movie id
     current_movie_id = int(line.rstrip(':\n'))
-    movies[current_movie_id] = movie_count
+    movie_id_row_idx_map[current_movie_id] = movie_count
     movie_count += 1
   else:
     user_id, rating, date = line.split(',')
@@ -48,14 +48,15 @@ for user_id in user_ids_rated_over_20:
 
 # print(len(user_ratings))
 user_count = len(user_ratings)
-movie_rating_matrix = np.zeros( (movie_count, user_count), dtype='int' )
+movie_rating_matrix = np.zeros( (movie_count, user_count), dtype='int8' )
 
+user_id_column_idx_map = {} # key: user_id, value: index of user_id; to be used in later parts
 user_idx = 0
 for user_id, ratings in user_ratings.items():
   # print(user_id, ratings)
   for movie_id in ratings:
-    movie_rating_matrix[movies[movie_id]][user_idx] = 1
-
+    movie_rating_matrix[movie_id_row_idx_map[movie_id]][user_idx] = 1
+  user_id_column_idx_map[user_id] = user_idx
   user_idx += 1
 
 ########################### Part3 : Data Structure Optimization ###############################
@@ -63,15 +64,14 @@ for user_id, ratings in user_ratings.items():
 
 #key: user_id, value:list of movie_id(continuous)
 user_ratings_mapped = {}
-users = {} # key: user_id, value: index of user_id
-i = 0
+# i = 0
 for user_id, ratings in user_ratings.items():
-  pdb.set_trace()
+  # pdb.set_trace()
   temp_list = []
-  users[user_id] = i
-  i += 1
+  # user_id_column_idx_map[user_id] = i
+  # i += 1
   for movie_id_before in ratings:
-    new_movie_id = movies[movie_id_before]
+    new_movie_id = movie_id_row_idx_map[movie_id_before]
     temp_list.append(new_movie_id)
   user_ratings_mapped[user_id] = temp_list
 
@@ -86,11 +86,10 @@ a_list = random.sample(para_list, 1000)
 b_list = random.sample(para_list, 1000)
 
 
-#f(x) = (ax +b) mod R 
+#f(x) = (ax +b) mod R
 def hash_func(a, b, x, R):
   res = (a*x + b) % R
   return res
-
 
 #get min_hashed value xxsof a column
 def get_hashed_val(movie_list, a, b, R):
@@ -105,7 +104,7 @@ def get_hashed_val(movie_list, a, b, R):
 def get_sig_vec(user_ratings_after, a, b, R, user_count):
   vec = np.zeros(user_count)
   for user_id, ratings in user_ratings_after.items():
-    vec[users[user_id]] = get_hashed_val(ratings, a, b, R)
+    vec[user_id_column_idx_map[user_id]] = get_hashed_val(ratings, a, b, R)
   pdb.set_trace()
   return vec
 
