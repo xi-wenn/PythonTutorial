@@ -63,7 +63,7 @@ for user_id, ratings in user_ratings.items():
 # movie_rating_sparse = csc_matrix(movie_rating_matrix)
 
 #key: user_id, value:list of movie_id(continuous)
-user_ratings_mapped = {}
+user_ratings_with_mapped_movie_row_idx = {}
 # i = 0
 for user_id, ratings in user_ratings.items():
   # pdb.set_trace()
@@ -73,11 +73,46 @@ for user_id, ratings in user_ratings.items():
   for movie_id_before in ratings:
     new_movie_id = movie_id_row_idx_map[movie_id_before]
     temp_list.append(new_movie_id)
-  user_ratings_mapped[user_id] = temp_list
+  user_ratings_with_mapped_movie_row_idx[user_id] = temp_list
 
-#user_ratings_mapped = collections.OrderedDict(user_ratings_mapped)
+#user_ratings_with_mapped_movie_row_idx = collections.OrderedDict(user_ratings_with_mapped_movie_row_idx)
 
 ########################## part4 #############################################################
+# First define some helper functions
+
+#f(x) = (ax +b) mod R
+def hash_func(a_val, b_val, x, R):
+  res = (a_val*x + b_val) % R
+  return res
+
+#get min_hashed value of a column
+def get_hashed_val(movie_row_idx_list, a_val, b_val, R):
+  min_val = R
+  for movie_row_idx in movie_row_idx_list:
+    val = hash_func(a_val,b_val,movie_row_idx,R)
+    if val < min_val:
+      min_val = val
+  return min_val
+
+#get 1 row of the signature matrix
+def get_sig_vec(user_ratings_after, a_val, b_val, R, user_count):
+  pdb.set_trace()
+  vec = np.zeros(user_count)
+  for user_id, ratings in user_ratings_after.items():
+    vec[user_id_column_idx_map[user_id]] = get_hashed_val(ratings, a_val, b_val, R)
+  pdb.set_trace()
+  return vec
+
+#get the signature matrix
+def get_sig_mat(a_list, b_list, user_ratings_after, user_count, R):
+  sig_mat = np.zeros([1000, user_count])
+  for i in range(1000):
+    pdb.set_trace()
+    sig_mat[i,:] = get_sig_vec(user_ratings_after, a_list[i], b_list[i], R, user_count)
+  return sig_mat
+
+
+
 #the smallest prime number larger than 4499
 R = 4507
 #generate 1000 a_i, b_i, form the hash functions. a_i, b_i in [0, R-1]
@@ -85,38 +120,7 @@ para_list = [i for i in range(4507)]
 a_list = random.sample(para_list, 1000)
 b_list = random.sample(para_list, 1000)
 
-
-#f(x) = (ax +b) mod R
-def hash_func(a, b, x, R):
-  res = (a*x + b) % R
-  return res
-
-#get min_hashed value xxsof a column
-def get_hashed_val(movie_list, a, b, R):
-  min_val = R
-  for movie_id in movie_list:
-    val = hash_func(a,b,movie_id,R)
-    if val < min_val:
-      min_val = val
-  return min_val
-
-#get 1 row of the signature matrix
-def get_sig_vec(user_ratings_after, a, b, R, user_count):
-  vec = np.zeros(user_count)
-  for user_id, ratings in user_ratings_after.items():
-    vec[user_id_column_idx_map[user_id]] = get_hashed_val(ratings, a, b, R)
-  pdb.set_trace()
-  return vec
-
-#get the signature matrix
-def get_sig_mat(a_list, b_list, user_ratings_after, user_count,R):
-  sig_mat = np.zeros([1000, user_count])
-  for i in range(1000):
-    sig_mat[i,:] = get_sig_vec(user_ratings_after, a_list[i], b_list[i], R, user_count)
-  return sig_mat
-
-
-signature_matrix = get_sig_mat(a_list, b_list, user_ratings_mapped, user_count,R)
+signature_matrix = get_sig_mat(a_list, b_list, user_ratings_with_mapped_movie_row_idx, user_count, R)
 np.save('signature_matrix_file', signature_matrix)
 
 
@@ -125,7 +129,7 @@ np.save('signature_matrix_file', signature_matrix)
 
 
 
-#pp.pprint(user_ratings_mapped)
+#pp.pprint(user_ratings_with_mapped_movie_row_idx)
 #4507---prime number
 
 
