@@ -90,7 +90,11 @@ def remove_single_appearance_values(vals, count):
 
 
 
-pdb.set_trace()
+# load user id mapings
+column_idx_user_id_map = {}
+with open('column_idx_user_id_map.pkl', 'rb') as f:
+  column_idx_user_id_map = pickle.load(f)
+
 close_user_pairs = set()
 
 for band_index in range(b):
@@ -109,16 +113,15 @@ for band_index in range(b):
 
   for bucket_key, bucket_values in buckets.items():
     for pair in itertools.combinations(bucket_values, 2):
-      close_user_pairs.add(frozenset(pair))
+      col_idx_1, col_idx_2 = pair
+      temp_list = []
+      temp_list.append(column_idx_user_id_map[col_idx_1])
+      temp_list.append(column_idx_user_id_map[col_idx_2])
+      close_user_pairs.add(frozenset( temp_list))
 
 
+pp.pprint(close_user_pairs)
 
-# load user id mapings
-user_id_column_idx_map = {}
-with open('user_id_column_idx_map.pkl', 'rb') as f:
-  user_id_column_idx_map = pickle.load(f)
-
-pp.pprint(user_id_column_idx_map)
 
 
 # def load_obj(name ):

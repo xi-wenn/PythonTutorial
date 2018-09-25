@@ -51,18 +51,21 @@ user_count = len(user_ratings)
 movie_rating_matrix = np.zeros( (movie_count, user_count), dtype='int8' )
 
 user_id_column_idx_map = {} # key: user_id, value: index of user_id; to be used in later parts
+column_idx_user_id_map = {}
 user_idx = 0
 for user_id, ratings in user_ratings.items():
   # print(user_id, ratings)
   for movie_id in ratings:
     movie_rating_matrix[movie_id_row_idx_map[movie_id]][user_idx] = 1
   user_id_column_idx_map[user_id] = user_idx
+  column_idx_user_id_map[user_idx] = user_id
   user_idx += 1
 
 # save user mapping to a file to use later
-with open('user_id_column_idx_map.pkl', 'wb') as f:
-  pickle.dump(user_id_column_idx_map, f, pickle.HIGHEST_PROTOCOL)
+with open('column_idx_user_id_map.pkl', 'wb') as f:
+  pickle.dump(column_idx_user_id_map, f, pickle.HIGHEST_PROTOCOL)
 
+pdb.set_trace()
 
 ########################### Part3 : Data Structure Optimization ###############################
 # movie_rating_sparse = csc_matrix(movie_rating_matrix)
