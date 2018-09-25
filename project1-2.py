@@ -7,6 +7,9 @@ import pdb
 from scipy.sparse import csc_matrix
 import collections
 from tempfile import TemporaryFile
+import itertools
+import pickle
+
 
 pp = pprint.PrettyPrinter(depth=200)
 
@@ -78,7 +81,7 @@ def generate_matrix(b_list, N):
   return T
 
 #remove the values that only appears once
-def remove(vals, count):
+def remove_single_appearance_values(vals, count):
   res = []
   for i in range(len(count)):
     if count[i] > 1:
@@ -97,36 +100,30 @@ for band_index in range(b):
   res_mat = (diag_mat @ cur_band_matrix + B_mat) % P
   val_list = np.sum(res_mat, axis = 0)
   vals, count = np.unique(val_list, return_counts=True)
-  repeated_val = remove(vals, count)
-  for index in range(len(val_list)):
-    if val_list[index] in repeated_val:
+  repeated_val = remove_single_appearance_values(vals, count)
+
+  buckets = dict.fromkeys(repeated_val, [])
+  for idx, value in enumerate(val_list):
+    if value in repeated_val:
+      buckets[value] += [idx]
+
+  for bucket_key, bucket_values in buckets.items():
+    for pair in itertools.combinations(bucket_values, 2):
+      close_user_pairs.add(frozenset(pair))
 
 
 
+# load user id mapings
+user_id_column_idx_map = {}
+with open('user_id_column_idx_map.pkl', 'rb') as f:
+  user_id_column_idx_map = pickle.load(f)
+
+pp.pprint(user_id_column_idx_map)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# def load_obj(name ):
+#     with open('obj/' + name + '.pkl', 'rb') as f:
+#         return pickle.load(f)
 
 
 
