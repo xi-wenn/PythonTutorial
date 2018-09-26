@@ -48,7 +48,7 @@ r = 10
 b = 100
 
 #generate 10 hash functions h_i(x) = (a_i * x + b_i) mod P
-P = 1019
+P = 42709
 para_list = [i for i in range(P)]
 a_list = random.sample(para_list, r)
 b_list = random.sample(para_list, r)
@@ -89,13 +89,13 @@ def remove_single_appearance_values(vals, count):
   return res
 
 
-
 # load user id mapings
 column_idx_user_id_map = {}
 with open('column_idx_user_id_map.pkl', 'rb') as f:
   column_idx_user_id_map = pickle.load(f)
 
 close_user_pairs = set()
+pdb.set_trace()
 
 for band_index in range(b):
   cur_band_matrix = get_ith_band(signature_mat, band_index, r)
@@ -106,20 +106,23 @@ for band_index in range(b):
   vals, count = np.unique(val_list, return_counts=True)
   repeated_val = remove_single_appearance_values(vals, count)
 
-  buckets = dict.fromkeys(repeated_val, [])
+  buckets = {} #dict.fromkeys(repeated_val, [])
   for idx, value in enumerate(val_list):
     if value in repeated_val:
-      buckets[value] += [idx]
+      # pdb.set_trace()
+      buckets[value] = buckets.get(value, []) + [idx]
 
+  pdb.set_trace()
   for bucket_key, bucket_values in buckets.items():
     for pair in itertools.combinations(bucket_values, 2):
-      col_idx_1, col_idx_2 = pair
-      temp_list = []
-      temp_list.append(column_idx_user_id_map[col_idx_1])
-      temp_list.append(column_idx_user_id_map[col_idx_2])
-      close_user_pairs.add(frozenset( temp_list))
+      # col_idx_1, col_idx_2 = pair
+      # temp_list = []
+      # temp_list.append(column_idx_user_id_map[col_idx_1])
+      # temp_list.append(column_idx_user_id_map[col_idx_2])
+      # close_user_pairs.add(frozenset( temp_list))
+      close_user_pairs.add(frozenset(pair))
 
-
+pdb.set_trace()
 pp.pprint(close_user_pairs)
 
 
