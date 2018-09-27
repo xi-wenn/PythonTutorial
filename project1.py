@@ -26,7 +26,6 @@ user_ids_rated_over_20 = set()
 
 ################################## Part 1: generating matrix ###################################
 for line in f:
-  # if len(user_ratings) > 50: break
   if ':' in line:
     # is movie id
     current_movie_id = int(line.rstrip(':\n'))
@@ -49,13 +48,8 @@ for line in f:
         # under 20 rated
         user_ratings[user_id] = already_rated + [current_movie_id]
 
-
-
-
-# print("before removal, user count = " + str(len(user_ratings)))
 for user_id in user_ids_rated_over_20:
   user_ratings.pop(user_id, None)
-# print("after removal, user count = " + str(len(user_ratings)))
 
 USER_COUNT = len(user_ratings)
 movie_rating_matrix = np.zeros( (movie_count, USER_COUNT), dtype='int8' )
@@ -71,11 +65,7 @@ for user_id, ratings in user_ratings.items():
   column_idx_user_id_map[user_idx] = user_id
   user_idx += 1
 
-# # save user mapping to a file to use later
-# with open('column_idx_user_id_map.pkl', 'wb') as f:
-#   pickle.dump(column_idx_user_id_map, f, pickle.HIGHEST_PROTOCOL)
 
-# # pdb.set_trace()
 
 ############################# Part 2 : calculating jaccard distance ############################
 # def get_rand_user_pair(USER_COUNT):
@@ -116,38 +106,23 @@ for user_id, ratings in user_ratings.items():
 
 
 ########################### Part3 : Data Structure Optimization ###############################
-# movie_rating_sparse = csc_matrix(movie_rating_matrix)
-
 compressed_movie_rating_matrix = np.zeros((20, USER_COUNT), dtype='int16')
+
 user_counter = 0
 for user_id, ratings in user_ratings.items():
-  # print(ratings)
+  # loop through movies rated by a user
   movie_counter = 0
   for movie_id in ratings:
     compressed_movie_rating_matrix[movie_counter, user_counter] = movie_id_row_idx_map[movie_id]
-    # increment
     movie_counter += 1
 
   user_counter += 1
-  # if user_counter > 100: sys.exit()
 
-# np.savetxt('compressed.txt', compressed_movie_rating_matrix, fmt='%i', delimiter = ',')
+# doesn't need original matrix from now on, delete to save ram
+del movie_rating_matrix
 
 
-# #key: user_id, value:list of movie_id(continuous)
-# user_ratings_with_mapped_movie_row_idx = {}
-# # i = 0
-# for user_id, ratings in user_ratings.items():
-#   # pdb.set_trace()
-#   temp_list = []
-#   # user_id_column_idx_map[user_id] = i
-#   # i += 1
-#   for movie_id_before in ratings:
-#     new_movie_id = movie_id_row_idx_map[movie_id_before]
-#     temp_list.append(new_movie_id)
-#   user_ratings_with_mapped_movie_row_idx[user_id] = temp_list
 
-#user_ratings_with_mapped_movie_row_idx = collections.OrderedDict(user_ratings_with_mapped_movie_row_idx)
 
 ########################## part4 #############################################################
 
@@ -158,16 +133,7 @@ for i in range(SIGNATURE_MATRIX_ROWS):
   # first hash original 20 row matrix
   a = random.randint(0, R - 1)
   b = random.randint(0, R - 1)
-  # print(a)
-  # print(b)
-  # hashed_movie_ratings = np.remainder((compressed_movie_rating_matrix * a + b), R)
   signature_matrix[i] = np.amin(np.remainder((compressed_movie_rating_matrix * a + b), R), axis = 0)
-
-# pp.pprint(signature_matrix)
-# np.savetxt('out.txt', signature_matrix, delimiter = ',', fmt='%i')
-# np.set_printoptions(threshold=np.nan)
-# pp.pprint(signature_matrix)
-# np.save('signature_matrix_file', signature_matrix)
 
 pdb.set_trace()
 
@@ -175,12 +141,17 @@ r = 11
 b = 91
 P = 45491
 
-def remove_single_appearance_values(vals, count):
-  res = []
-  for i in range(len(count)):
-    if count[i] > 1:
-      res.append(vals[i])
-  return res
+# def remove_single_appearance_values(vals, count):
+#   res = []
+#   for i in range(len(count)):
+#     if count[i] > 1:
+#       res.append(vals[i])
+#   return res
+
+# def map_to_buckets(i, x, buckets):
+#   # if x in repeated_vals:
+#   buckets[x] = buckets.get(x, []) + [i]
+
 
 
 close_user_pairs = set()
@@ -189,97 +160,29 @@ for band_index in range(b):
   b = np.random.choice(P, r).reshape((r, 1))
   cur_band_matrix = signature_matrix[band_index * r : (band_index + 1) * r, :]
 
-  # get_ith_band(signature_matrix, band_index, r)
-
-
-  # diag_mat = np.diag(a)
-  # B_mat = generate_matrix(b, signature_matrix.shape[1])
   res_mat = (a @ cur_band_matrix + b) % P
   val_list = np.sum(res_mat, axis = 0)
-  vals, count = np.unique(val_list, return_counts=True)
-  repeated_val = remove_single_appearance_values(vals, count)
+  # vals, count = np.unique(val_list, return_counts=True)
+  # repeated_val = remove_single_appearance_values(vals, count)
 
-  buckets = {} #dict.fromkeys(repeated_val, [])
+
+  buckets = {}
+  # map(lambda i, x, buckets = buckets: buckets[x] = buckets.get(x, []) + [i], enumerate(val_list))
   for idx, value in enumerate(val_list):
-    if value in repeated_val:
+    # if value in repeated_val:
       # pdb.set_trace()
-      buckets[value] = buckets.get(value, []) + [idx]
+    buckets[(band_index, value)] = buckets.get(value, []) + [idx]
 
   pdb.set_trace()
   for bucket_key, bucket_values in buckets.items():
-    for pair in itertools.combinations(bucket_values, 2):
-      # col_idx_1, col_idx_2 = pair
-      # temp_list = []
-      # temp_list.append(column_idx_user_id_map[col_idx_1])
-      # temp_list.append(column_idx_user_id_map[col_idx_2])
-      # close_user_pairs.add(frozenset( temp_list))
-      close_user_pairs.add(frozenset(pair))
-
-
-
-# # First define some helper functions
-
-# #f(x) = (ax +b) mod R
-# def hash_func(a_val, b_val, x, R):
-#   res = (a_val*x + b_val) % R
-#   return res
-
-# #get min_hashed value of a column
-# def get_hashed_val(movie_row_idx_list, a_val, b_val, R):
-#   min_val = R
-#   for movie_row_idx in movie_row_idx_list:
-#     val = hash_func(a_val,b_val,movie_row_idx,R)
-#     if val < min_val:
-#       min_val = val
-#   return min_val
-
-# #get 1 row of the signature matrix
-# def get_sig_vec(user_ratings_after, a_val, b_val, R, USER_COUNT):
-#   # pdb.set_trace()
-#   vec = np.zeros(USER_COUNT)
-#   for user_id, ratings in user_ratings_after.items():
-
-#     vec[user_id_column_idx_map[user_id]] = get_hashed_val(ratings, a_val, b_val, R)
-#   # pdb.set_trace()
-#   return vec
-
-# #get the signature matrix
-# def get_sig_mat(a_list, b_list, user_ratings_after, USER_COUNT, R):
-#   sig_mat = np.zeros([1000, USER_COUNT])
-#   for i in range(1000):
-#     # pdb.set_trace()
-#     sig_mat[i,:] = get_sig_vec(user_ratings_after, a_list[i], b_list[i], R, USER_COUNT)
-#   return sig_mat
-
-
-
-# #the smallest prime number larger than 4499
-# R = 4507
-# #generate 1000 a_i, b_i, form the hash functions. a_i, b_i in [0, R-1]
-# para_list = [i for i in range(4507)]
-# a_list = random.sample(para_list, 1000)
-# b_list = random.sample(para_list, 1000)
-
-# signature_matrix = get_sig_mat(a_list, b_list, user_ratings_with_mapped_movie_row_idx, USER_COUNT, R)
-# np.save('signature_matrix_file', signature_matrix)
-
-
-
-
-
-
-
-# pp.pprint(user_ratings_with_mapped_movie_row_idx)
-# 4507---prime number
-
-
-
-# pp.pprint(movie_rating_matrix)
-
-# print(movies)
-# pp.pprint(user_ratings)
-# print(len(user_ratings))
-
+    if len(bucket_values) > 1:
+      for pair in itertools.combinations(bucket_values, 2):
+        # col_idx_1, col_idx_2 = pair
+        # temp_list = []
+        # temp_list.append(column_idx_user_id_map[col_idx_1])
+        # temp_list.append(column_idx_user_id_map[col_idx_2])
+        # close_user_pairs.add(frozenset( temp_list))
+        close_user_pairs.add(frozenset(pair))
 
 
 
