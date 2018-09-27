@@ -171,9 +171,9 @@ for band_index in range(b):
   for idx, value in enumerate(val_list):
     # if value in repeated_val:
       # pdb.set_trace()
-    buckets[(band_index, value)] = buckets.get(value, []) + [idx]
+    buckets[(band_index, value)] = buckets.get((band_index, value), []) + [idx]
 
-  pdb.set_trace()
+  # pdb.set_trace()
   for bucket_key, bucket_values in buckets.items():
     if len(bucket_values) > 1:
       for pair in itertools.combinations(bucket_values, 2):
@@ -184,7 +184,9 @@ for band_index in range(b):
         # close_user_pairs.add(frozenset( temp_list))
         close_user_pairs.add(frozenset(pair))
 
-
+  print(band_index)
+  print(len(close_user_pairs))
+  # print(close_user_pairs)
 
 
 
