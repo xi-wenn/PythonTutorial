@@ -57,6 +57,7 @@ movie_rating_matrix = np.zeros( (movie_count, USER_COUNT), dtype='int8' )
 user_id_column_idx_map = {} # key: user_id, value: index of user_id; to be used in later parts
 column_idx_user_id_map = {}
 user_idx = 0
+
 for user_id, ratings in user_ratings.items():
   # print(user_id, ratings)
   for movie_id in ratings:
@@ -113,7 +114,8 @@ for user_id, ratings in user_ratings.items():
   # loop through movies rated by a user
   movie_counter = 0
   for movie_id in ratings:
-    compressed_movie_rating_matrix[movie_counter, user_counter] = movie_id_row_idx_map[movie_id]
+    # add one to row idx since 0 is a valid movie entry
+    compressed_movie_rating_matrix[movie_counter, user_counter] = movie_id_row_idx_map[movie_id] + 1
     movie_counter += 1
 
   user_counter += 1
@@ -135,7 +137,7 @@ for i in range(SIGNATURE_MATRIX_ROWS):
   b = random.randint(0, R - 1)
   signature_matrix[i] = np.amin(np.remainder((compressed_movie_rating_matrix * a + b), R), axis = 0)
 
-pdb.set_trace()
+# pdb.set_trace()
 
 r = 11
 b = 91
@@ -154,7 +156,9 @@ P = 45491
 
 
 
-close_user_pairs = set()
+# close_user_pairs = set()
+false_positives = set()
+actual_close_pairs = set()
 for band_index in range(b):
   a = np.diag(np.random.choice(P, r))
   b = np.random.choice(P, r).reshape((r, 1))
@@ -177,17 +181,49 @@ for band_index in range(b):
   for bucket_key, bucket_values in buckets.items():
     if len(bucket_values) > 1:
       for pair in itertools.combinations(bucket_values, 2):
+        user_1, user_2 = pair
+        pair_set = frozenset(pair)
+
+        # if already seen pair before, continue
+        if (pair_set in false_positives) or (pair_set in actual_close_pairs):
+          continue
+
+        # else calculate jaccard distance and add to appropriate set
+        user_1_data, user_2_data = compressed_movie_rating_matrix[:,user_1], compressed_movie_rating_matrix[:,user_2]
+        intersection = np.count_nonzero(user_1_data[user_1_data > 0] == user_2_data[user_1_data > 0])
+        union = np.count_nonzero(np.unique(np.append(user_1_data, user_2_data)))
+
+        if union == 0:
+          print(intersection)
+          print(np.unique(user_1_data + user_2_data))
+          print(union)
+        if (1 - (intersection / union)) < 0.35:
+          actual_close_pairs.add(pair_set)
+        else:
+          false_positives.add(pair_set)
         # col_idx_1, col_idx_2 = pair
         # temp_list = []
         # temp_list.append(column_idx_user_id_map[col_idx_1])
         # temp_list.append(column_idx_user_id_map[col_idx_2])
         # close_user_pairs.add(frozenset( temp_list))
-        close_user_pairs.add(frozenset(pair))
+        # close_user_pairs.add(frozenset(pair))
 
   print(band_index)
-  print(len(close_user_pairs))
+  print(len(false_positives))
+  print(len(actual_close_pairs))
   # print(close_user_pairs)
 
+# actual_similar_pairs = set()
+# while close_user_pairs:
+#   pair = close_user_pairs.pop()
+#   user_1, user_2 = pair
+#   user_1_data, user_2_data = compressed_movie_rating_matrix[:,user_1], compressed_movie_rating_matrix[:,user_2]
+#   intersection = np.count_nonzero(user_1_data == user_2_data)
+#   union = np.count_nonzero(np.unique(user_1_data + user_2_data))
+#   if (1 - (intersection / union)) < 0.35:
+#     actual_similar_pairs.add(pair)
+
+# print(len(actual_similar_pairs))
 
 
 
