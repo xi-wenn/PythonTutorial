@@ -2,3 +2,6 @@
 *.zip
 *.pdf
 *.txt
+*.npy
+*.dat
+*.pkl
