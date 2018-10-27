@@ -69,41 +69,41 @@ for user_id, ratings in user_ratings.items():
 
 
 ############################# Part 2 : calculating jaccard distance ############################
-# def get_rand_user_pair(USER_COUNT):
-#   user_1 = -1
-#   user_2 = -1
-#   while user_1 == user_2:
-#     user_1 = random.randint(0, USER_COUNT - 1)
-#     user_2 = random.randint(0, USER_COUNT - 1)
+def get_rand_user_pair(USER_COUNT):
+  user_1 = -1
+  user_2 = -1
+  while user_1 == user_2:
+    user_1 = random.randint(0, USER_COUNT - 1)
+    user_2 = random.randint(0, USER_COUNT - 1)
 
-#   return frozenset({user_1, user_2})
+  return frozenset({user_1, user_2})
 
-# NUM_PAIRS = 10000
+NUM_PAIRS = 10000
 
-# i = 0
-# selected_pairs = set()
-# jaccard_distances = []
-# for i in range(NUM_PAIRS):
-#   user_pair = get_rand_user_pair(USER_COUNT)
-#   while user_pair in selected_pairs: # if already selected, re-draw
-#     user_pair = get_rand_user_pair(USER_COUNT)
+i = 0
+selected_pairs = set()
+jaccard_distances = []
+for i in range(NUM_PAIRS):
+  user_pair = get_rand_user_pair(USER_COUNT)
+  while user_pair in selected_pairs: # if already selected, re-draw
+    user_pair = get_rand_user_pair(USER_COUNT)
 
-#   # unpack user values
-#   user_1, user_2 = user_pair
-#   user_1_data, user_2_data = movie_rating_matrix[:,user_1], movie_rating_matrix[:,user_2]
-#   intersection = np.sum(np.bitwise_and(user_1_data, user_2_data))
-#   union = np.sum(np.bitwise_or(user_1_data, user_2_data))
-#   jaccard_distances  += [1 - (intersection / union)]
+  # unpack user values
+  user_1, user_2 = user_pair
+  user_1_data, user_2_data = movie_rating_matrix[:,user_1], movie_rating_matrix[:,user_2]
+  intersection = np.sum(np.bitwise_and(user_1_data, user_2_data))
+  union = np.sum(np.bitwise_or(user_1_data, user_2_data))
+  jaccard_distances  += [1 - (intersection / union)]
 
 
-# num_bins = 50
-# print("Average distance = " + str(np.average(jaccard_distances)))
-# print("Lowest distance = " + str(np.amin(jaccard_distances)))
-# plt.hist(jaccard_distances, num_bins, facecolor='blue', alpha=0.5)
-# plt.title("Jaccard Distance of 10,000 Random User Pairs")
-# plt.xlabel("Jaccard Distance")
-# plt.ylabel("User Pair Count")
-# plt.show()
+num_bins = 50
+print("Average distance = " + str(np.average(jaccard_distances)))
+print("Lowest distance = " + str(np.amin(jaccard_distances)))
+plt.hist(jaccard_distances, num_bins, facecolor='blue', alpha=0.5)
+plt.title("Jaccard Distance of 10,000 Random User Pairs")
+plt.xlabel("Jaccard Distance")
+plt.ylabel("User Pair Count")
+plt.show()
 
 
 ########################### Part3 : Data Structure Optimization ###############################
@@ -144,21 +144,6 @@ r = 11
 band_num = 91
 P = 45491
 
-# def remove_single_appearance_values(vals, count):
-#   res = []
-#   for i in range(len(count)):
-#     if count[i] > 1:
-#       res.append(vals[i])
-#   return res
-
-# def map_to_buckets(i, x, buckets):
-#   # if x in repeated_vals:
-#   buckets[x] = buckets.get(x, []) + [i]
-
-
-
-# close_user_pairs = set()
-# false_positives = set()
 actual_close_pairs = set()
 a_diag = np.diag(np.random.choice(P, r))
 b_col = np.random.choice(P, r).reshape((r, 1))
@@ -167,17 +152,13 @@ for band_index in range(band_num):
   cur_band_matrix = signature_matrix[band_index * r : (band_index + 1) * r, :]
   res_mat = (a_diag @ cur_band_matrix + b_col) % P
   val_list = np.sum(res_mat, axis = 0)
-  # vals, count = np.unique(val_list, return_counts=True)
-  # repeated_val = remove_single_appearance_values(vals, count)
 
   buckets = {}
-  # map(lambda i, x, buckets = buckets: buckets[x] = buckets.get(x, []) + [i], enumerate(val_list))
+
   for idx, value in enumerate(val_list):
-    # if value in repeated_val:
-      # pdb.set_trace()
     buckets[value] = buckets.get((value), []) + [idx]
   list_buckets.append(buckets)
-  # pdb.set_trace()
+
   for bucket_key, bucket_values in buckets.items():
     if len(bucket_values) > 1:
       for pair in itertools.combinations(bucket_values, 2):
@@ -199,33 +180,14 @@ for band_index in range(band_num):
           print(union)
         if (1 - (intersection / union)) < 0.35:
           actual_close_pairs.add(pair_set)
-        # else:
-        #   false_positives.add(pair_set)
-        # col_idx_1, col_idx_2 = pair
-        # temp_list = []
-        # temp_list.append(column_idx_user_id_map[col_idx_1])
-        # temp_list.append(column_idx_user_id_map[col_idx_2])
-        # close_user_pairs.add(frozenset( temp_list))
-        # close_user_pairs.add(frozenset(pair))
 
-  print(band_index)
+
+  # print(band_index)
   # print(len(false_positives))
-  print(len(actual_close_pairs))
+  # print(len(actual_close_pairs))
   # print(close_user_pairs)
 
-# actual_similar_pairs = set()
-# while close_user_pairs:
-#   pair = close_user_pairs.pop()
-#   user_1, user_2 = pair
-#   user_1_data, user_2_data = compressed_movie_rating_matrix[:,user_1], compressed_movie_rating_matrix[:,user_2]
-#   intersection = np.count_nonzero(user_1_data == user_2_data)
-#   union = np.count_nonzero(np.unique(user_1_data + user_2_data))
-#   if (1 - (intersection / union)) < 0.35:
-#     actual_similar_pairs.add(pair)
-
-# print(len(actual_similar_pairs))
-
-###############    Part 5       #######################################################
+######################### Part 5 : nearest neighbors #######################################################
 def find_nearest_user(new_movie_list, list_buckets):
 
   #map the movie_id in the given list to 1 - 4499 by above dictionary
@@ -235,16 +197,12 @@ def find_nearest_user(new_movie_list, list_buckets):
     compressed_movie_rating_vec[row_count] = movie_id_row_idx_map[movie_id] + 1
     row_count += 1
 
-  pdb.set_trace()
-
   #get the 1001 by 1 signature vector
   signature_vec = np.zeros(SIGNATURE_MATRIX_ROWS)
   for i in range(SIGNATURE_MATRIX_ROWS):
     a = a_list[i]
     b = b_list[i]
     signature_vec[i] = np.amin(np.remainder((compressed_movie_rating_vec * a + b), R))
-
-  pdb.set_trace()
 
   #hash the signature vector to get the bucket values
   bucket_dict_new = {}
@@ -254,9 +212,6 @@ def find_nearest_user(new_movie_list, list_buckets):
     val = np.sum(res_mat, axis = 0)
     bucket_dict_new[band_idx] = val
 
-  pdb.set_trace()
-  # min_distance = 1
-  # nearest_user_id = -1
   nearest_set = set()
   #loop all the bucket values, find nearest neighbor
   for band_idx, val in bucket_dict_new.items():
@@ -274,10 +229,8 @@ def find_nearest_user(new_movie_list, list_buckets):
 
   return nearest_set
 
-pdb.set_trace()
 new_movie_list = [178, 761, 4432]
 nearest_user = find_nearest_user(new_movie_list, list_buckets)
-pdb.set_trace()
 print(nearest_user)
 
 
