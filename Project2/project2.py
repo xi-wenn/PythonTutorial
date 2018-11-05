@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 
+import math
+from sklearn.metrics import accuracy_score
+
 ######################################### Prep work ############################################
 CCAT_ROW_IDX = 33
 TRAIN_SIZE = 100000
@@ -20,9 +23,6 @@ for i in range(num_rows):
   if rcv1.target[i, CCAT_ROW_IDX] == 1:
     ccat_vector[i] = 1
 
-# print(ccat_vector)
-# print(np.where(ccat_vector == 1)[0].size)
-
 
 ########################### Problem 1b: split training test set ###################################
 data_train  = rcv1.data[:TRAIN_SIZE, :]
@@ -30,54 +30,113 @@ data_test   = rcv1.data[TRAIN_SIZE:, :]
 label_train = ccat_vector[:TRAIN_SIZE]
 label_test = ccat_vector[TRAIN_SIZE:]
 
-# print(data_train)
-# print(data_test)
-# print(label_train)
-# print(label_test)
-
-
 ################################### Problem 2: PEGASOS ############################################
 max_iterations = 500
-B = 100
-lamda = 0.0001
-train_error = np.zeros([max_iterations+1, 1])
+B = 200
+lamda = 0.00025
+pegasos_train_error = np.zeros([max_iterations+1, 1])
 t = 1
 #B is = number of points selected in the subset At
 #def PEGASOS_SVM(data_train, label_train, max_iterations, lamda, B):
 
 #initialize w = [0, ..., 0]
-W = np.zeros([data_train.shape[1], 1])
+W_pegasos = np.zeros([data_train.shape[1], 1])
 
 for t in range(1, max_iterations + 1):
 #choose subset points At
     random_int_list = (np.random.randint(0, TRAIN_SIZE, 10*B))
-    subset = data_train[random_int_list]@W
+    subset = data_train[random_int_list]@W_pegasos
     subset = ((np.diag(label_train[random_int_list]))@subset)
     indices = subset < 1
-    indices = random_int_list.reshape(10*B, 1)[indices]
+    indices = random_int_list.reshape(10*B, 1)[indices][:B]
 
-    subgradient = lamda*W - (np.sum((np.diag(label_train[indices]))@data_train[indices], axis = 0)).reshape(data_train.shape[1],1)/B
+    subgradient = lamda*W_pegasos - (np.sum((np.diag(label_train[indices]))@data_train[indices], axis = 0)).reshape(data_train.shape[1],1)/B
     step_size = 1 / (t * lamda)
-    W = W - step_size * subgradient
-    W = W * min(1, 1/(math.sqrt(lamda) * np.linalg.norm(W)))
+    W_pegasos = W_pegasos - step_size * subgradient
+    W_pegasos = W_pegasos * min(1, 1/(math.sqrt(lamda) * np.linalg.norm(W_pegasos)))
 
     #calculate the train_error at this iteration
-    y_pred = data_train @ W
+    y_pred = data_train @ W_pegasos
     y_pred[y_pred >= 0] = 1
     y_pred[y_pred < 0] = -1
-    train_error[t] = accuracy_score(label_train, y_pred)
-    print(train_error[t])
+    pegasos_train_error[t] = 1 - accuracy_score(label_train, y_pred)
+    print(pegasos_train_error[t], t)
+
+
+plt.plot(range(1, max_iterations + 1), pegasos_train_error[1:])
+plt.title("PEGASOS Traning Error")
+plt.xlabel("Iterations")
+plt.ylabel("Traning Error")
+plt.show()
 
 
 ################################### Problem 3: AdaGrad ############################################
 
-# # init
-# eta = 0.01
-# T = 10000
-# D = 100
-# for t in range(T):
-#   for i in range(D):
-#     # do sth
+max_iterations = 500
+B = 200
+lamda = 0.00025
+adagrad_train_error = np.zeros([max_iterations+1, 1])
+t = 1
+N = data_train.shape[1]
+#B is = number of points selected in the subset At
+#def PEGASOS_SVM(data_train, label_train, max_iterations, lamda, B):
+
+#initialize W vector
+W_agagrad = np.ones([data_train.shape[1], 1])/(np.sqrt(1/lamda))
+
+eta = 1/(math.sqrt(max_iterations))
+
+diagonal = np.zeros([data_train.shape[1], 1])
+
+
+
+for t in range(1, max_iterations + 1):
+    #choose subset points At
+    random_int_list = (np.random.randint(0, TRAIN_SIZE, 10*B))
+    subset = data_train[random_int_list]@W_agagrad
+    subset = ((np.diag(label_train[random_int_list]))@subset)
+    indices = subset < 1
+    indices = random_int_list.reshape(10*B, 1)[indices]
+
+    #update subgradient
+    #gradient f_t(w_t)
+    subgradient = lamda*W_agagrad - (np.sum((np.diag(label_train[indices]))@data_train[indices], axis = 0)).reshape(data_train.shape[1],1)/(indices.shape[0])
+
+
+    if t == 1:
+        W_agagrad = W_agagrad - eta * (subgradient)
+    else:
+        #pdb.set_trace()
+        G = diagonal
+        G = np.sqrt(G)
+        G = 1/G #G_inverse
+        step_size = 1 / (eta + math.sqrt(np.sum(np.absolute(subgradient))))
+
+        #convert to diagnal matrix
+        W_agagrad = W_agagrad - step_size * (G * subgradient)
+
+    #projection
+    W_agagrad = W_agagrad * min(1, 1/(math.sqrt(lamda) * np.linalg.norm(W_agagrad)))
+
+    #update next Gt
+    diagonal = diagonal + subgradient * subgradient
+
+    #calculate the train_error at this iteration
+    y_pred = data_train @ W_agagrad
+    y_pred[y_pred >= 0] = 1
+    y_pred[y_pred < 0] = -1
+
+    #pdb.set_trace()
+
+    adagrad_train_error[t] = 1 - accuracy_score(label_train, y_pred)
+    print(adagrad_train_error[t], t)
+
+plt.plot(range(1, 500 + 1), pegasos_train_error[1:])
+plt.plot(range(1, 500 + 1), adagrad_train_error[1:])
+plt.title("Traning Error")
+plt.xlabel("Iterations")
+plt.ylabel("Traning Error")
+plt.show()
 
 
 ############################## Problem 4a: Neural Net; Keras #######################################
@@ -254,58 +313,22 @@ model_b6.fit(data_train, label_train_one_zero, epochs=5, batch_size=128)
 loss_and_metrics_b6 = model_b6.evaluate(data_train, label_train_one_zero)
 print(loss_and_metrics_b6)
 
-# ############################## 300s/epoch
-# model_b7 = Sequential([
-#     Dense(50, input_shape=(num_columns,)),
-#     Activation('relu'),
-#     Dense(100),
-#     Activation('relu'),
-#     Dense(50),
-#     Activation('relu'),
-#     Dense(100),
-#     Activation('relu'),
-#     Dense(50),
-#     Activation('relu'),
-#     Dense(1),
-#     Activation('linear')
-# ])
-# model_b7.compile(loss='mean_squared_error',
-#               optimizer='sgd',
-#               metrics=['accuracy'])
-# model_b7.fit(data_train, label_train_one_zero, epochs=5, batch_size=128)
-# loss_and_metrics_b7 = model_b7.evaluate(data_train, label_train_one_zero)
-# print(loss_and_metrics_b7)
-
-# ############################ 400s/epoch
-# model_b8 = Sequential([
-#     Dense(100, input_shape=(num_columns,)),
-#     Activation('relu'),
-#     Dense(50),
-#     Activation('relu'),
-#     Dense(100),
-#     Activation('relu'),
-#     Dense(50),
-#     Activation('relu'),
-#     Dense(1),
-#     Activation('linear')
-# ])
-# model_b8.compile(loss='mean_squared_error',
-#               optimizer='sgd',
-#               metrics=['accuracy'])
-# model_b8.fit(data_train, label_train_one_zero, epochs=5, batch_size=128)
-# loss_and_metrics_b8 = model_b8.evaluate(data_train, label_train_one_zero)
-# print(loss_and_metrics_b8)
-
-
 
 
 ############################## Problem 5: Test Results #######################################
 # test PEGASOS
-y_pred_test = data_test @ W
+y_pred_test = data_test @ W_pegasos
 y_pred_test[y_pred_test >= 0] = 1
 y_pred_test[y_pred_test < 0] = -1
-test_error = 1 - accuracy_score(label_test, y_pred_test)
-print(test_error)
+pegasos_test_error = 1 - accuracy_score(label_test, y_pred_test)
+print(pegasos_test_error)
+
+# test AdaGrad
+y_pred_test = data_test @ W_agagrad
+y_pred_test[y_pred_test >= 0] = 1
+y_pred_test[y_pred_test < 0] = -1
+adagrad_test_error = 1 - accuracy_score(label_test, y_pred_test)
+print(adagrad_test_error )
 
 # test neural net
 test_loss_and_metrics_b6 = model_b6.evaluate(data_test, label_test_one_zero)
