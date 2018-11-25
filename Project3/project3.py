@@ -48,3 +48,38 @@ for line in f:
 
 data = np.asarray(data)
 print(data)
+
+
+#online K-means Algorithm (mini-batch)
+import random
+
+#centroids is np.array, x is a data points
+def center(x, centroids):
+    diff = centroids - x
+    diff = diff**2
+    center_index = np.argmin(np.sum(diff, axis = 1))
+    return center_index
+
+B = 1000 #batch-size
+K = 100 #number of centorids
+T = 100 #max number of iterations
+
+#get K random centroids(randomly select K data points, not using k-means++)
+indices = random.sample(range(data.shape[0]), K)
+centroids = data[indices]
+
+for t in range(1, T+1):
+    eta = 1/t
+    #print(t)
+
+    #randomly get mini-batch size data points
+    mini_batch_indices = random.sample(range(data.shape[0]), B)
+    batch_points = data[mini_batch_indices]
+
+    #calculate the center(x)
+    for i in range(B):
+        x_i = batch_points[i]
+        center_index = center(x_i, centroids)
+
+        #update the cur_center
+        centroids[center_index] += eta * (x_i - centroids[center_index])
