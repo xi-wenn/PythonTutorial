@@ -3,21 +3,29 @@ import matplotlib.pyplot as plt
 import sys
 
 INPUT_FILE_NAME = 'yelp.csv'
-f = open(INPUT_FILE_NAME, 'r')
+f = open(INPUT_FILE_NAME, 'r', encoding="utf8")
 
 
-data = None
+data = []
 ############################ Part 1: Process data and formulate problem ###########################
 isFirstLine = True
-# i = 0
+# k = 0
 for line in f:
-
   if isFirstLine:
     # skip first line (headers)
     isFirstLine = False
+#     k += 1
     continue
 
   data_row = line.strip().split(',')[2:] # strip off id and name
+  # find where "yelping since" is (dedault idx 1), so we can handle cases where name includes comma
+  data_start_idx = 0
+  for i in range(1, len(data_row)):
+    if data_row[i].find('-') > 0:
+      break
+    else:
+      data_start_idx += 1
+  data_row  = data_row[data_start_idx:]
   data_row[1] = data_row[1].replace('-', '') # format date as number
   if len(data_row) >  19:
     # has more than one elite year, then count how many there are, and use that as a feature
@@ -28,15 +36,15 @@ for line in f:
 
   # map to float so we can process as numpy array
   data_row = list(map(float, data_row))
-  if data is None:
-    data = np.asarray(data_row)
+
+  if data == []:
+    data = [data_row]
   else:
-    data = np.vstack((data, np.asarray(data_row)))
-  # data.append(data_row)
-#   i += 1
-#   if i > 100 :
-#     print(i)
+    data.append(data_row)
+#   k += 1
+#   if k % 10000 == 0:
+#     print(k)
 #     break
 
-# print(data)
-
+data = np.asarray(data)
+print(data)
