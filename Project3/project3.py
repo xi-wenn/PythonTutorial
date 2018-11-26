@@ -47,6 +47,10 @@ for line in f:
 #     break
 
 data = np.asarray(data)
+means = np.mean(data, axis = 0)
+# print(means)
+# print((data / means))
+data = data / means
 print(data)
 
 
