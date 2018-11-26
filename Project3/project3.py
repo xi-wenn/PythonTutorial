@@ -110,3 +110,27 @@ def select_kmpp_centroids(K):
               break
   return centroids
 
+
+
+  #return minimum distance square of the point and the current centroids
+def get_distance(data, centroid):
+    diff = data - centroid
+    diff = diff**2
+    return np.sum(diff, axis = 1)
+
+#return np array
+def seeding(K, data):
+    centroids = np.zeros([K, data.shape[1]])
+    centroids[0] = data[random.sample(range(data.shape[0]), 1)]
+    distance_list = [0.0]*data.shape[0]
+
+    min_distance = np.ones(data.shape[0])*float("inf")
+    data_index = list(range(0,len(data)))
+    for i in range(1, K):
+        cur_distance = get_distance(data, centroids[i-1])
+        min_distance = np.minimum(cur_distance, min_distance)
+        Probability = min_distance/sum(min_distance)
+        centroid_index = np.random.choice(data_index,1,list(Probability))[0]
+        centroids[i] = data[centroid_index]
+    return centroids
+
