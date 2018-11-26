@@ -83,3 +83,48 @@ for t in range(1, T+1):
 
         #update the cur_center
         centroids[center_index] += eta * (x_i - centroids[center_index])
+
+
+#return minimum distance square of the point and the current centroids
+def min_distance(x, centroids):
+    diff = centroids - x
+    diff = diff**2
+    return min(np.sum(diff, axis = 1))
+
+#randomly select the first centroid
+K = 100
+centroids = np.zeros([K, data.shape[1]])
+centroids[0] = (data[random.sample(range(data.shape[0]), 1)])
+centroids[0].shape
+
+distance_list = [0.0]*data.shape[0]
+
+for i in range(1, K):
+    for p_index in range(data.shape[0]):
+        distance_list[p_index] = min_distance(data[p_index], centroids[0:i, :])
+
+    total = sum(distance_list) * random.random()
+    for ind, val in enumerate(distance_list):
+            total -= val
+            if total > 0:
+                continue
+            centroids[i] = data[ind]
+            break
+
+#k-means
+for t in range(1, T+1):
+    eta = 1/t
+    #print(t)
+
+    #randomly get mini-batch size data points
+    mini_batch_indices = random.sample(range(data.shape[0]), B)
+    batch_points = data[mini_batch_indices]
+
+    #calculate the center(x)
+    for i in range(B):
+        x_i = batch_points[i]
+        center_index = center(x_i, centroids)
+
+        #update the cur_center
+        centroids[center_index] += eta * (x_i - centroids[center_index])
+
