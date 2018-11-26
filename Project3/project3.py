@@ -111,7 +111,6 @@ def select_kmpp_centroids(K):
   return centroids
 
 
-
   #return minimum distance square of the point and the current centroids
 def get_distance(data, centroid):
     diff = data - centroid
@@ -119,10 +118,10 @@ def get_distance(data, centroid):
     return np.sum(diff, axis = 1)
 
 #return np array
-def seeding(K, data):
+def kmpp_seeding(K, data):
     centroids = np.zeros([K, data.shape[1]])
     centroids[0] = data[random.sample(range(data.shape[0]), 1)]
-    distance_list = [0.0]*data.shape[0]
+    # distance_list = [0.0]*data.shape[0]
 
     min_distance = np.ones(data.shape[0])*float("inf")
     data_index = list(range(0,len(data)))
@@ -134,3 +133,45 @@ def seeding(K, data):
         centroids[i] = data[centroid_index]
     return centroids
 
+
+############################# problem 4 ####################################
+def my_seeding(K, data):
+    centroids = np.zeros([K, data.shape[1]])
+    centroids[0] = data[random.sample(range(data.shape[0]), 1)]
+#     distance_list = [0.0]*data.shape[0]
+
+    min_distance = np.ones(data.shape[0])*float("inf")
+    data_index = list(range(0,len(data)))
+    for i in range(1, K):
+        cur_distance = get_distance(data, centroids[i-1])
+        min_distance = np.minimum(cur_distance, min_distance)
+#         Probability = min_distance/sum(min_distance)
+#         centroid_index = np.random.choice(data_index,1,list(Probability))[0]
+        centroid_index = np.argmax(min_distance)
+        centroids[i] = data[centroid_index]
+    return centroids
+
+################################## part 5 ##################################
+def calculate_distances(data, centroids):
+  distances = np.zeros((data.shape[0],))
+  print(distances.shape)
+  for i in range(data.shape[0]):
+    distances[i] = np.amin(np.sum(np.sqrt((data[i] - centroids)**2), axis = 1))
+  return distances
+
+k_list = [5, 10, 50, 100, 200, 300, 400, 500]
+distance_list = np.zeros((len(k_list), 3))
+for i, k in enumerate(k_list):
+  indices = random.sample(range(data.shape[0]), K)
+  centroids = data[indices]
+  centroids = run_kmeans(data, k, centroids)
+  distances = calculate_distances(data, centroids)
+  distance_list[i] = np.amin(distances), np.mean(distances), np.amax(distances)
+
+print(distance_list)
+plt.plot(k_list, distance_list[:, 0], '-ro')
+plt.show()
+plt.plot(k_list, distance_list[:, 1], '-go')
+plt.show()
+plt.plot(k_list, distance_list[:, 2], '-bo')
+plt.show()
