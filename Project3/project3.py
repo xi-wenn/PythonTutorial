@@ -47,10 +47,12 @@ for line in f:
 #     break
 
 data = np.asarray(data)
-means = np.mean(data, axis = 0)
+mins = np.amin(data, axis = 0)
+maxs = np.amax(data, axis = 0)
 # print(means)
 # print((data / means))
-data = data / means
+# data = data / means
+data = (data - mins) / (maxs - mins)
 print(data)
 
 ############################# problem 2 ###################################
@@ -63,7 +65,7 @@ centroids = data[indices]
 def run_kmeans(data, K, centroids):
   B = 1000 #batch-size
   #   K = 100 #number of centorids
-  T = 1000 #max number of iterations
+  T = 300 #max number of iterations
   for t in range(1, T+1):
     eta = 1/t
     #print(t)
@@ -152,6 +154,7 @@ def my_seeding(K, data):
     return centroids
 
 ################################## part 5 ##################################
+################################## part 5 ##################################
 def calculate_distances(data, centroids):
   distances = np.zeros((data.shape[0],))
   print(distances.shape)
@@ -160,18 +163,48 @@ def calculate_distances(data, centroids):
   return distances
 
 k_list = [5, 10, 50, 100, 200, 300, 400, 500]
-distance_list = np.zeros((len(k_list), 3))
+random_distance_list = np.zeros((len(k_list), 3))
+kmpp_distance_list = np.zeros((len(k_list), 3))
+my_distance_list = np.zeros((len(k_list), 3))
 for i, k in enumerate(k_list):
+  # random init (p2)
   indices = random.sample(range(data.shape[0]), K)
-  centroids = data[indices]
-  centroids = run_kmeans(data, k, centroids)
-  distances = calculate_distances(data, centroids)
-  distance_list[i] = np.amin(distances), np.mean(distances), np.amax(distances)
+  random_centroids = data[indices]
+  random_centroids = run_kmeans(data, k, random_centroids)
+  random_distances = calculate_distances(data, random_centroids)
+  random_distance_list[i] = np.amin(random_distances), np.mean(random_distances), np.amax(random_distances)
+  # kmpp init (p3)
+  kmpp_centroids = kmpp_seeding(k, data)
+  kmpp_centroids = run_kmeans(data, k, kmpp_centroids)
+  kmpp_distances = calculate_distances(data, kmpp_centroids)
+  kmpp_distance_list[i] = np.amin(kmpp_distances), np.mean(kmpp_distances), np.amax(kmpp_distances)
+  # my init (p4)
+  my_centroids = my_seeding(k, data)
+  my_centroids = run_kmeans(data, k, my_centroids)
+  my_distances = calculate_distances(data, my_centroids)
+  my_distance_list[i] = np.amin(my_distances), np.mean(my_distances), np.amax(my_distances)
 
 print(distance_list)
-plt.plot(k_list, distance_list[:, 0], '-ro')
+plt.plot(k_list, random_distance_list[:, 0], '-ro')
+plt.plot(k_list, kmpp_distance_list[:, 0], '-go')
+plt.plot(k_list, my_distance_list[:, 0], '-bo')
+plt.title('Kmeans average min distance')
+plt.xlabel('k')
+plt.ylabel('Avg min distance')
 plt.show()
-plt.plot(k_list, distance_list[:, 1], '-go')
+
+plt.plot(k_list, random_distance_list[:, 1], '-ro')
+plt.plot(k_list, kmpp_distance_list[:, 1], '-go')
+plt.plot(k_list, my_distance_list[:, 1], '-bo')
+plt.title('Kmeans average mean distance')
+plt.xlabel('k')
+plt.ylabel('Avg mean distance')
 plt.show()
-plt.plot(k_list, distance_list[:, 2], '-bo')
+
+plt.plot(k_list, random_distance_list[:, 2], '-ro')
+plt.plot(k_list, kmpp_distance_list[:, 2], '-go')
+plt.plot(k_list, my_distance_list[:, 2], '-bo')
+plt.title('Kmeans average max distance')
+plt.xlabel('k')
+plt.ylabel('Avg max distance')
 plt.show()
