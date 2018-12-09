@@ -143,9 +143,11 @@ mu = np.sum(data, axis=1) / T
 max_mu = np.max(mu)
 
 R = calc_regret(mu, max_mu, choice, T)
+print("Total regret with EXP3 =", R[-1])
 plt.plot(R)
 plt.show()
 
+print("Total reward with EXP3 =", reward_list[-1])
 plt.plot(reward_list)
 plt.show()
 
