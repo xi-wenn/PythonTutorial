@@ -13,82 +13,93 @@ for line in f:
 data = np.asarray(data, dtype='int8')
 
 ################################ Thompson ########################################
-S = np.zeros([data.shape[0], 1]) + 100
-F = np.zeros([data.shape[0], 1]) + 11000
-T = data.shape[1]
+#Thompson
+def Thompson(data):
+    S = np.zeros([data.shape[0], 1]) + 100
+    F = np.zeros([data.shape[0], 1]) + 11000
+    T = data.shape[1]
 
-reward = []
-choice = []
-rw = 0
-u_dict = {}
+    reward = []
+    choice = []
+    rw = 0
+    u_dict = {}
 
-for t in range(1, T+1):
-    theta = np.random.beta(S+1,F+1)
-    i = np.argmax(theta)
-    u_dict[i] = u_dict.get(i, []) + [data[i][t-1]]
-    choice.append(i)
-    if data[i][t-1] == 1:
-        S[i] += 1
-        rw += 1
-    else:
-        S[i] *= 0.98
-        F[i] += 1
-    reward.append(rw)
+    for t in range(1, T+1):
+        theta = np.random.beta(S+1,F+1)
+        i = np.argmax(theta)
+        u_dict[i] = u_dict.get(i, []) + [data[i][t-1]]
+        choice.append(i)
+        if data[i][t-1] == 1:
+            S[i] += 1
+            rw += 1
+        else:
+            S[i] *= 0.98
+            F[i] += 1
+        reward.append(rw)
 
-#calculate regret
-mean = np.zeros([data.shape[0], 1])
-for key, val in u_dict.items():
-    mean[key] = sum(val)/len(val)
+    #calculate regret
+    mean = np.zeros([data.shape[0], 1])
+    for key, val in u_dict.items():
+        mean[key] = sum(val)/len(val)
 
-best_mu = np.max(mean)
-regret = []
-rgt = 0
-for i in range(T):
-    rgt += best_mu - mean[choice[i]]
-    regret.append(rgt/(i+1))
+    best_mu = np.max(mean)
+    regret = []
+    rgt = 0
+    for i in range(T):
+        rgt += best_mu - mean[choice[i]]
+        regret.append(rgt/(i+1))
 
-plt.plot(range(0,len(regret)), regret)
+    plt.plot(range(0,len(regret)), regret)
+    plt.show()
+    plt.plot(range(0,len(reward)), reward)
+    plt.show()
+
+Thompson(data)
 
 
 ################################ UCB ######################################
-Mu = np.zeros([data.shape[0], 1])
-Ni = np.ones([data.shape[0], 1])
-T = data.shape[1]
-for t in range(1, data.shape[0] + 1):
-    if data[t-1][t-1] == 1:
-        Mu[t-1] = 1
+def UCB(data):
+    Mu = np.zeros([data.shape[0], 1])
+    Ni = np.ones([data.shape[0], 1])
+    T = data.shape[1]
+    for t in range(1, data.shape[0] + 1):
+        if data[t-1][t-1] == 1:
+            Mu[t-1] = 1
 
-regret = []
-reward = []
-choice = []
-rgt = 0
-rw = 0
-u_dict = {}
-for t in range(data.shape[0] + 1, T + 1):
-    UCB = Mu + np.sqrt(2*np.log(t - data.shape[0])/Ni)
-    j = np.argmax(UCB)
-    yt = data[j][t-1]
-    Ni[j] += 1
-    Mu[j] += (yt - Mu[j])/Ni[j]
-    selected = np.argmax(Mu);
-    choice.append(selected)
-    u_dict[selected] = u_dict.get(selected, []) + [data[selected][t-1]]
-    rw += data[selected][t-1]
-    reward.append(rw)
+    regret = []
+    reward = []
+    choice = []
+    rgt = 0
+    rw = 0
+    u_dict = {}
+    for t in range(data.shape[0] + 1, T + 1):
+        UCB = Mu + np.sqrt(2*np.log(t - data.shape[0])/Ni)
+        j = np.argmax(UCB)
+        yt = data[j][t-1]
+        Ni[j] += 1
+        Mu[j] += (yt - Mu[j])/Ni[j]
+        selected = np.argmax(Mu);
+        choice.append(selected)
+        u_dict[selected] = u_dict.get(selected, []) + [data[selected][t-1]]
+        rw += data[selected][t-1]
+        reward.append(rw)
 
+    #calculate the regret
+    mean = np.zeros([data.shape[0], 1])
+    for key, val in u_dict.items():
+        mean[key] = sum(val)/len(val)
 
-mean = np.zeros([data.shape[0], 1])
-for key, val in u_dict.items():
-    mean[key] = sum(val)/len(val)
-
-best_mu = np.max(mean)
-regret = []
-rgt = 0
-for i in range(T-50):
-    rgt += best_mu - mean[choice[i]]
-    regret.append(rgt/(i+1))
-
-plt.plot(range(0,len(regret)), regret)
+    best_mu = np.max(mean)
+    regret = []
+    rgt = 0
+    for i in range(T-50):
+        rgt += best_mu - mean[choice[i]]
+        regret.append(rgt/(i+1))
+    plt.plot(range(0,len(regret)), regret)
+    plt.show()
+    plt.plot(range(0,len(reward)), reward)
+    plt.show()
+UCB(data)
 
 
 
