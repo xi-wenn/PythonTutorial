@@ -53,6 +53,7 @@ def Thompson(data):
     plt.show()
     plt.plot(range(0,len(reward)), reward)
     plt.show()
+    print("total reward with Thompson:", reward[-1])
 
 Thompson(data)
 
@@ -99,6 +100,8 @@ def UCB(data):
     plt.show()
     plt.plot(range(0,len(reward)), reward)
     plt.show()
+    print("total reward with UCB:", reward[-1])
+
 UCB(data)
 
 
