@@ -105,29 +105,26 @@ UCB(data)
 
 ################################ EXP3 #####################################
 from numpy import random
-n,T = data.shape
-print(n, T)
-pt = np.full((50,), 1.0/50)
-Lt = np.zeros((50,))
+def exp_three(data):
+  n,T = data.shape
+  pt = np.full((n,), 1.0/50)
+  Lt = np.zeros((n,))
 
-# rgt = 0
-# regret = []
-choice = []
-for t in range(1, T + 1):
-  eta = np.sqrt(np.log(n)/(t*n))
-  I = np.random.choice(50, 1, p=pt)[0]
-  choice.append(I)
-  lt = 1 - data[:, t-1]
-  Lt += lt
-  pt = np.exp(-eta*Lt) / np.sum(np.exp(-eta*Lt))
+  reward_list = []
+  reward = 0
+  choice = []
+  for t in range(1, T + 1):
+    eta = np.sqrt(np.log(n)/(t*n))
+    I = np.random.choice(n, 1, p=pt)[0]
+    choice.append(I)
+    lt = 1 - data[:, t-1]
+    Lt += lt
+    pt = np.exp(-eta*Lt) / np.sum(np.exp(-eta*Lt))
 
-  # rgt += 1 - data[I][t-1]
-  # regret.append(rgt/t)
+    reward += data[I][t-1]
+    reward_list.append(reward)
 
-plt.plot(regret)
-plt.show()
-
-
+  return (choice, reward_list)
 
 def calc_regret(mu, max_mu, choice, T):
   R_t = []
@@ -137,15 +134,16 @@ def calc_regret(mu, max_mu, choice, T):
     R_t.append(regret / (t+1))
   return R_t
 
+choice, reward_list = exp_three(data)
+
 mu = np.sum(data, axis=1) / T
 max_mu = np.max(mu)
-print(mu)
-print(max_mu)
-print(max_mu*T)
-# print(calc_regret(mu, max_mu, choice, T))
+
 R = calc_regret(mu, max_mu, choice, T)
-# print(R)
 plt.plot(R)
+plt.show()
+
+plt.plot(reward_list)
 plt.show()
 
 
