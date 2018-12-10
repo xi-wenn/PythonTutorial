@@ -8,7 +8,7 @@ f = open(INPUT_FILE_NAME, 'r', encoding="utf8")
 data = []
 
 for line in f:
-  data.append(line.strip().split(','))
+    data.append(line.strip().split(','))
 
 data = np.asarray(data, dtype='int8')
 
@@ -50,10 +50,13 @@ def Thompson(data):
         regret.append(rgt/(i+1))
 
     plt.plot(range(0,len(regret)), regret)
+    plt.title("Regret over time using Thompson Sampling (modified version)")
     plt.show()
+    print("Total regret with Thompson:", regret[-1])
+    plt.title("Reward over time using Thompson Sampling (modified version)")
     plt.plot(range(0,len(reward)), reward)
     plt.show()
-    print("total reward with Thompson:", reward[-1])
+    print("Total reward with Thompson:", reward[-1])
 
 Thompson(data)
 
@@ -109,33 +112,33 @@ UCB(data)
 ################################ EXP3 #####################################
 from numpy import random
 def exp_three(data):
-  n,T = data.shape
-  pt = np.full((n,), 1.0/50)
-  Lt = np.zeros((n,))
+    n,T = data.shape
+    pt = np.full((n,), 1.0/50)
+    Lt = np.zeros((n,))
 
-  reward_list = []
-  reward = 0
-  choice = []
-  for t in range(1, T + 1):
-    eta = np.sqrt(np.log(n)/(t*n))
-    I = np.random.choice(n, 1, p=pt)[0]
-    choice.append(I)
-    lt = 1 - data[:, t-1]
-    Lt += lt
-    pt = np.exp(-eta*Lt) / np.sum(np.exp(-eta*Lt))
+    reward_list = []
+    reward = 0
+    choice = []
+    for t in range(1, T + 1):
+        eta = np.sqrt(np.log(n)/(t*n))
+        I = np.random.choice(n, 1, p=pt)[0]
+        choice.append(I)
+        lt = 1 - data[:, t-1]
+        Lt += lt
+        pt = np.exp(-eta*Lt) / np.sum(np.exp(-eta*Lt))
 
-    reward += data[I][t-1]
-    reward_list.append(reward)
+        reward += data[I][t-1]
+        reward_list.append(reward)
 
-  return (choice, reward_list)
+    return (choice, reward_list)
 
 def calc_regret(mu, max_mu, choice, T):
-  R_t = []
-  regret = 0
-  for t in range(T):
-    regret += max_mu - mu[choice[t]]
-    R_t.append(regret / (t+1))
-  return R_t
+    R_t = []
+    regret = 0
+    for t in range(T):
+        regret += max_mu - mu[choice[t]]
+        R_t.append(regret / (t+1))
+    return R_t
 
 choice, reward_list = exp_three(data)
 
@@ -143,13 +146,15 @@ mu = np.sum(data, axis=1) / T
 max_mu = np.max(mu)
 
 R = calc_regret(mu, max_mu, choice, T)
+
 print("Total regret with EXP3 =", R[-1])
+plt.title("Regret over time using EXP3 (full feedback)")
 plt.plot(R)
 plt.show()
 
 print("Total reward with EXP3 =", reward_list[-1])
+plt.title("Reward over time using EXP3 (full feedback)")
 plt.plot(reward_list)
 plt.show()
-
 
 
